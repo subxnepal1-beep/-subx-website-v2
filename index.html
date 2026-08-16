@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        var t = localStorage.getItem('subx_theme');
+        if (t === 'light') {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://pyjfggtupzmxkjrtghfe.supabase.co" />
+    <link rel="dns-prefetch" href="https://pyjfggtupzmxkjrtghfe.supabase.co" />
+    <link rel="preload" href="https://pyjfggtupzmxkjrtghfe.supabase.co/storage/v1/object/public/site-assets/file_0000000076a88208a260d5d5e82f756a-removebg-preview-Picsart-AiImageEnhancer.png" as="image" type="image/png" fetchpriority="high" />
+    <title>SubX Nepal | Premium Digital Subscriptions</title>
+    <meta name="description" content="Buy premium AI tools, streaming, software, and gaming subscriptions in Nepal with instant WhatsApp delivery." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

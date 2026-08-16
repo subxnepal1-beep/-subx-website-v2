@@ -1,0 +1,6 @@
+{
+  "name": "SubX Nepal",
+  "description": "Premium Digital Subscriptions Ecommerce in Nepal with WhatsApp checkout and owner admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

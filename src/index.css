@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    color-scheme: dark light;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply antialiased min-h-screen font-sans;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+
+  html.dark body, body:not(.light) {
+    @apply bg-[#080C15] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200;
+    background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.08) 0%, transparent 60%);
+  }
+
+  html.light body {
+    @apply bg-[#F4F6F9] text-slate-900 selection:bg-cyan-500/30 selection:text-cyan-800;
+    background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.04) 0%, transparent 60%);
+  }
+}
+
+/* Offscreen Section Rendering Optimization for 60/120fps Mobile Scrolling */
+#faq, #payments, #why-choose, footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 350px;
+}
+
+/* Custom Fast Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+html.dark ::-webkit-scrollbar-track, body:not(.light) ::-webkit-scrollbar-track {
+  background: #070A12;
+}
+html.light ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+html.dark ::-webkit-scrollbar-thumb, body:not(.light) ::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+/* Fast Hardware Accelerated Theme Classes */
+.theme-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+html.light .theme-card {
+  @apply bg-white border border-slate-200 text-slate-900 shadow-xs hover:shadow-md hover:border-slate-300;
+}
+html.dark .theme-card, body:not(.light) .theme-card {
+  @apply bg-[#0B0F19] border border-slate-800/90 text-slate-100 shadow-md shadow-black/20 hover:border-cyan-500/50 hover:bg-[#0E1524];
+}
+
+.theme-card-inner {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+html.light .theme-card-inner {
+  @apply bg-slate-50 border border-slate-200/80 text-slate-800;
+}
+html.dark .theme-card-inner, body:not(.light) .theme-card-inner {
+  @apply bg-[#060913] border border-slate-800/80 text-slate-200;
+}
+
+/* Fast Glass Utilities */
+.glass-panel {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+html.dark .glass-panel, body:not(.light) .glass-panel {
+  background: rgba(11, 15, 25, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
