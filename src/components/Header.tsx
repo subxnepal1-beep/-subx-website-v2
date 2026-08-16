@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ShoppingCart, MessageCircle, Sun, Moon } from 'lucide-react';
 import { SubXLogo } from './SubXLogo';
 import { DISPLAY_WHATSAPP, WHATSAPP_NUMBER } from '../lib/store';
@@ -7,7 +7,6 @@ import { SiteSettings } from '../types';
 interface HeaderProps {
   cartItemCount: number;
   onOpenCart: () => void;
-  onOpenAdmin: () => void;
   isAdminAuthenticated: boolean;
   onScrollToSection: (id: string) => void;
   siteSettings?: SiteSettings;
@@ -18,24 +17,14 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   cartItemCount,
   onOpenCart,
-  onOpenAdmin,
   isAdminAuthenticated,
   onScrollToSection,
   siteSettings,
   theme = 'dark',
   onToggleTheme
 }) => {
-  // Secret logo taps count for opening admin
-  const [logoClickCount, setLogoClickCount] = useState<number>(0);
-
   const handleLogoClick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const nextCount = logoClickCount + 1;
-    setLogoClickCount(nextCount);
-    if (nextCount >= 5) {
-      onOpenAdmin();
-      setLogoClickCount(0);
-    }
   };
 
   const waNum = siteSettings?.whatsappNumber || WHATSAPP_NUMBER;

@@ -18,6 +18,8 @@ try {
   localStorage.removeItem('subx_admin_email_v1');
   localStorage.removeItem('subx_admin_password');
   localStorage.removeItem('subx_admin_pin');
+  localStorage.removeItem('subx_orders_v1');
+  localStorage.removeItem('subx_orders_v2');
 } catch {}
 
 export const WHATSAPP_NUMBER = '9779765617156';
@@ -253,27 +255,7 @@ export function useSubXStore() {
   });
 
   // Orders state
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const saved = localStorage.getItem(ORDERS_STORAGE_KEY) || localStorage.getItem('subx_orders_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(
-            (o: any) =>
-              o &&
-              o.id !== 'SUBX-1001' &&
-              o.id !== 'SUBX-1002' &&
-              o.customerName !== 'Samir Thapa' &&
-              o.customerName !== 'Aayush Shrestha'
-          );
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse orders', e);
-    }
-    return [];
-  });
+  const [orders, setOrders] = useState<Order[]>([]);
 
   // Customer's own device orders state
   const [myOrderIds, setMyOrderIds] = useState<string[]>(() => {
@@ -390,11 +372,6 @@ export function useSubXStore() {
   useEffect(() => {
     safeLocalStorageSet(CART_STORAGE_KEY, cart);
   }, [cart]);
-
-  // Sync orders to local storage
-  useEffect(() => {
-    safeLocalStorageSet(ORDERS_STORAGE_KEY, orders);
-  }, [orders]);
 
   // Sync my order ids to local storage
   useEffect(() => {

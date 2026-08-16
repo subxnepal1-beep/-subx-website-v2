@@ -6,7 +6,6 @@ import { WHATSAPP_NUMBER } from '../lib/store';
 interface FooterProps {
   onScrollToSection?: (id: string) => void;
   siteSettings?: SiteSettings;
-  onOpenAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ siteSettings }) => {

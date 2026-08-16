@@ -54,7 +54,7 @@ export default function App() {
   // Cart Drawer Visibility
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
 
-  // Admin Modal Visibility (Direct URL /admin, logo 5-taps, or shortcut Ctrl+Shift+A)
+  // Admin Modal Visibility (Direct URL /admin)
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
@@ -109,30 +109,7 @@ export default function App() {
     };
   }, []);
 
-  // Keyboard shortcut listener for private admin access (Ctrl + Shift + A)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
-        e.preventDefault();
-        setIsAdminOpen((prev) => {
-          const next = !prev;
-          try {
-            if (next) {
-              window.history.pushState(null, '', '/admin');
-            } else {
-              window.history.pushState(null, '', '/');
-            }
-          } catch {}
-          return next;
-        });
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   // Unique categories from products (memoized)
   const allCategories = useMemo(() => {
@@ -168,7 +145,6 @@ export default function App() {
       <Header
         cartItemCount={store.cartItemCount}
         onOpenCart={() => setIsCartOpen(true)}
-        onOpenAdmin={openAdmin}
         isAdminAuthenticated={store.isAdminAuthenticated}
         onScrollToSection={scrollToSection}
         siteSettings={store.siteSettings}
@@ -331,7 +307,6 @@ export default function App() {
 
       {/* Footer */}
       <Footer
-        onOpenAdmin={openAdmin}
         onScrollToSection={scrollToSection}
         siteSettings={store.siteSettings}
       />
