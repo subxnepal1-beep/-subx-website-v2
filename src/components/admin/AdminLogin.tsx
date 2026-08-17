@@ -34,6 +34,15 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [tempUserEmail, setTempUserEmail] = useState<string>('');
   
+  // Real active PIN loaded dynamically from Supabase
+  const [activePin, setActivePin] = useState<string>(() => {
+    try {
+      const local = localStorage.getItem('subx_admin_pin');
+      if (local && /^\d{4}$/.test(local.trim())) return local.trim();
+    } catch {}
+    return (siteSettings?.admin_pin || siteSettings?.adminPin || '2026').trim();
+  });
+
   // PIN state
   const [pinInput, setPinInput] = useState<string>('');
   const [showPin, setShowPin] = useState<boolean>(false);
@@ -101,6 +110,27 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
     return () => clearInterval(interval);
   }, [isLocked, lockUntil]);
 
+  // Fetch freshest PIN directly from Supabase on mount
+  useEffect(() => {
+    const fetchLatestPin = async () => {
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data } = await supabase.from('site_settings').select('*');
+          if (data && data.length > 0) {
+            const pinVal = data[0].admin_pin || data[0].adminPin;
+            if (pinVal && typeof pinVal === 'string' && /^\d{4}$/.test(pinVal.trim())) {
+              setActivePin(pinVal.trim());
+              try {
+                localStorage.setItem('subx_admin_pin', pinVal.trim());
+              } catch {}
+            }
+          }
+        } catch {}
+      }
+    };
+    fetchLatestPin();
+  }, []);
+
   // Handle Step 1: Supabase Email & Password
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +162,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
     }
 
     try {
-      // Step 1: Direct Supabase Authentication
+      // Step 1: Direct Supabase Authentication with user email & password
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailToLogin,
         password: passToLogin
@@ -156,12 +186,33 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
         } else {
           setAuthError({
             title: 'Authentication Failed',
-            message: 'The email address or password you entered is incorrect. Please verify your credentials and try again.',
+            message: 'The email address or password you entered is incorrect in Supabase. Please check your credentials.',
             attempts: newAttempts
           });
         }
       } else {
-        // Step 1 Successful! Transition to Step 2 PIN verification
+        // Step 1 Successful! Extract active PIN from Supabase User Metadata or DB
+        const userMetaPin = data.user.user_metadata?.admin_pin || data.user.user_metadata?.adminPin;
+        if (userMetaPin && typeof userMetaPin === 'string' && /^\d{4}$/.test(userMetaPin.trim())) {
+          setActivePin(userMetaPin.trim());
+          try {
+            localStorage.setItem('subx_admin_pin', userMetaPin.trim());
+          } catch {}
+        } else {
+          try {
+            const { data: dbData } = await supabase.from('site_settings').select('*');
+            if (dbData && dbData.length > 0) {
+              const dbPin = dbData[0].admin_pin || dbData[0].adminPin;
+              if (dbPin && typeof dbPin === 'string' && /^\d{4}$/.test(dbPin.trim())) {
+                setActivePin(dbPin.trim());
+                try {
+                  localStorage.setItem('subx_admin_pin', dbPin.trim());
+                } catch {}
+              }
+            }
+          } catch {}
+        }
+
         setTempUserEmail(data.user.email || emailToLogin);
         setStep('pin');
         setPinInput('');
@@ -170,7 +221,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
     } catch (err: any) {
       setAuthError({
         title: 'Authentication Failed',
-        message: 'The email address or password you entered is incorrect. Please verify your credentials.'
+        message: 'The email address or password you entered is incorrect. Please verify your Supabase credentials.'
       });
     } finally {
       setAuthLoading(false);
@@ -187,7 +238,19 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
     setAuthLoading(true);
 
     const enteredPin = pinInput.trim();
-    const targetPin = (siteSettings?.admin_pin || siteSettings?.adminPin || '2026').trim();
+    
+    // Fetch latest known PIN from memory, localStorage, or siteSettings
+    let targetPin = activePin.trim();
+    try {
+      const stored = localStorage.getItem('subx_admin_pin');
+      if (stored && /^\d{4}$/.test(stored.trim())) {
+        targetPin = stored.trim();
+      }
+    } catch {}
+
+    if (!targetPin) {
+      targetPin = (siteSettings?.admin_pin || siteSettings?.adminPin || '2026').trim();
+    }
 
     if (!enteredPin) {
       setAuthError({
@@ -206,6 +269,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
       try {
         localStorage.removeItem(FAILED_ATTEMPTS_STORAGE_KEY);
         localStorage.removeItem(LOCK_UNTIL_STORAGE_KEY);
+        sessionStorage.setItem('subx_admin_pin_verified', 'true');
       } catch {}
 
       onLoginSuccess(tempUserEmail || emailInput.trim().toLowerCase());
@@ -228,7 +292,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
       } else {
         setAuthError({
           title: 'Incorrect Security PIN',
-          message: 'The 4-digit Security PIN you entered is invalid. Please try again.',
+          message: 'The 4-digit Security PIN you entered is invalid. Old or wrong PIN does not work.',
           attempts: newAttempts
         });
       }
@@ -287,7 +351,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
             ? 'Access is temporarily restricted due to security protection.'
             : step === 'pin'
               ? 'Step 2: Enter your 4-digit Security PIN to unlock the dashboard.'
-              : 'Step 1: Sign in with your authorized email and password.'}
+              : 'Step 1: Sign in with your Supabase authorized email & password.'}
         </p>
 
         {/* 🔒 10-Minute Lockout Professional Warning Card */}
@@ -337,14 +401,14 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
           </div>
         )}
 
-        {/* STEP 1: Email & Password Form */}
+        {/* STEP 1: Supabase Email & Password Form */}
         {step === 'credentials' && (
           <form onSubmit={handleStep1Submit} className="mt-5 space-y-4 text-left relative z-10">
             
             {/* Field 1: Admin Email */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Admin Email
+                Supabase Admin Email
               </label>
               <div className="relative">
                 <Mail className={`w-4 h-4 absolute left-3.5 top-3.5 ${isLocked ? 'text-slate-600' : 'text-slate-500'}`} />
@@ -352,7 +416,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
                   type="email"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="Enter your authorized email address"
+                  placeholder="Enter your Supabase user email"
                   disabled={isLocked || authLoading}
                   className={`w-full border rounded-xl pl-10 pr-3.5 py-3 text-xs focus:outline-none transition-colors ${
                     isLocked
@@ -368,7 +432,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
             {/* Field 2: Password */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Password
+                Supabase Password
               </label>
               <div className="relative">
                 <Lock className={`w-4 h-4 absolute left-3.5 top-3.5 ${isLocked ? 'text-slate-600' : 'text-slate-500'}`} />
@@ -411,7 +475,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
               {authLoading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Verifying Password...</span>
+                  <span>Verifying Supabase Password...</span>
                 </>
               ) : isLocked ? (
                 <>
@@ -421,7 +485,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  <span>Continue to Step 2 (PIN) →</span>
+                  <span>Verify Password & Continue to PIN →</span>
                 </>
               )}
             </button>
@@ -439,7 +503,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div className="truncate max-w-[200px]">
-                  <div className="text-[10px] text-slate-400 font-medium">Password Verified</div>
+                  <div className="text-[10px] text-slate-400 font-medium">Supabase Password Verified</div>
                   <div className="text-xs font-bold text-white truncate">{tempUserEmail}</div>
                 </div>
               </div>
@@ -462,7 +526,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-300">
-                  Enter 4-Digit Security PIN
+                  Step 2: Enter 4-Digit Security PIN
                 </label>
                 <span className="text-[10px] font-mono text-cyan-400">
                   {pinInput.length}/4 digits
@@ -495,9 +559,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, siteSett
                   {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1.5">
-                Default PIN is <code className="text-cyan-300 bg-cyan-950/40 px-1 py-0.5 rounded font-mono">2026</code> (You can change it inside Security Settings).
-              </p>
             </div>
 
             {/* Submit PIN Button */}

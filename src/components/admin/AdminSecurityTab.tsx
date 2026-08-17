@@ -49,7 +49,13 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
   const [pinError, setPinError] = useState<string | null>(null);
   const [pinSuccess, setPinSuccess] = useState<string | null>(null);
 
-  const activeSavedPin = (siteSettings?.admin_pin || siteSettings?.adminPin || '2026').trim();
+  const getActivePin = () => {
+    try {
+      const stored = localStorage.getItem('subx_admin_pin');
+      if (stored && /^\d{4}$/.test(stored.trim())) return stored.trim();
+    } catch {}
+    return (siteSettings?.admin_pin || siteSettings?.adminPin || '2026').trim();
+  };
 
   // 1. Handle Supabase Auth Password Update
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -92,12 +98,12 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
         throw error;
       }
 
-      setPasswordSuccess('Your password has been successfully updated in Supabase Auth! The new password is active immediately.');
+      setPasswordSuccess('Your password has been successfully updated in Supabase Auth! Next login will require this new password.');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
       console.error('Password update error:', err);
-      setPasswordError(err?.message || 'Failed to update password.');
+      setPasswordError(err?.message || 'Failed to update password in Supabase.');
     } finally {
       setLoadingPassword(false);
     }
@@ -112,6 +118,7 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
     const cur = currentPin.trim();
     const np = newPin.trim();
     const cp = confirmPin.trim();
+    const activeSavedPin = getActivePin();
 
     if (cur !== activeSavedPin) {
       setPinError('The current Security PIN is incorrect.');
@@ -131,6 +138,31 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
     setLoadingPin(true);
 
     try {
+      // 1. Direct Supabase Auth User Metadata Update
+      if (isSupabaseConfigured && supabase) {
+        try {
+          await supabase.auth.updateUser({
+            data: { admin_pin: np, adminPin: np }
+          });
+        } catch (authErr) {
+          console.warn('Auth user metadata update warning:', authErr);
+        }
+
+        // 2. Direct Supabase Database Tables Upsert
+        try {
+          await supabase.from('site_settings').upsert([{ id: 'default', admin_pin: np, adminPin: np, updated_at: new Date().toISOString() }]);
+          await supabase.from('website_settings').upsert([{ id: 'default', admin_pin: np, adminPin: np, updated_at: new Date().toISOString() }]);
+          await supabase.from('settings').upsert([{ id: 'default', admin_pin: np, adminPin: np, updated_at: new Date().toISOString() }]);
+        } catch (dbErr) {
+          console.warn('Supabase DB table upsert warning:', dbErr);
+        }
+      }
+
+      // 3. Local and React Store update
+      try {
+        localStorage.setItem('subx_admin_pin', np);
+      } catch {}
+
       if (onUpdateSiteSettings) {
         await onUpdateSiteSettings({
           admin_pin: np,
@@ -138,7 +170,7 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
         });
       }
 
-      setPinSuccess('4-digit Security PIN updated successfully! It is now required for Step 2 of admin login.');
+      setPinSuccess('4-digit Security PIN updated successfully in Supabase! The old PIN will no longer work.');
       setCurrentPin('');
       setNewPin('');
       setConfirmPin('');
@@ -227,7 +259,7 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
             </div>
 
             <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-2xl text-[11px] text-purple-300/90 leading-relaxed">
-              🔒 <strong>Security Policy:</strong> You can update either your Supabase Password or your 4-digit Security PIN at any time. Changes take effect immediately.
+              🔒 <strong>Security Policy:</strong> You can update either your Supabase Password or your 4-digit Security PIN at any time. Changes take effect immediately in Supabase.
             </div>
           </div>
         </div>
@@ -461,7 +493,7 @@ export const AdminSecurityTab: React.FC<AdminSecurityTabProps> = ({
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Save & Apply New Password</span>
+                      <span>Save & Apply New Password in Supabase</span>
                     </>
                   )}
                 </button>
