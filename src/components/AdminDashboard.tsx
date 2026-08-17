@@ -144,7 +144,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Body Content */}
         {!isAuthenticated ? (
           <div className="flex-1 overflow-y-auto flex items-center justify-center">
-            <AdminLogin onLoginSuccess={handleLoginSuccess} />
+            <AdminLogin 
+              onLoginSuccess={handleLoginSuccess}
+              siteSettings={siteSettings}
+            />
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 bg-[#07090E]">
@@ -334,6 +337,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <AdminSecurityTab 
                   currentUserEmail={currentUserEmail}
                   onLogout={handleLogout}
+                  siteSettings={siteSettings}
+                  onUpdateSiteSettings={onUpdateSiteSettings}
                 />
               )}
             </div>

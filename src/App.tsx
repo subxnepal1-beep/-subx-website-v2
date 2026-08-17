@@ -377,8 +377,8 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
       />
 
-      {/* Website Opening Announcement Popup (WhatsApp Community) */}
-      <AnnouncementModal siteSettings={store.siteSettings} />
+      {/* Website Opening Announcement Popup (WhatsApp Community) - Only on customer website */}
+      {!isAdminOpen && <AnnouncementModal siteSettings={store.siteSettings} />}
 
     </div>
   );

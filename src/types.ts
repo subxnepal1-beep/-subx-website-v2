@@ -125,6 +125,8 @@ export interface SiteSettings {
   showPromotionalPosters?: boolean;
   showAnnouncementPopup?: boolean;
   show_announcement_popup?: boolean;
+  adminPin?: string;
+  admin_pin?: string;
   updatedAt?: string;
 }
 

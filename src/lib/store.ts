@@ -152,7 +152,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   whatsapp_community_url: 'https://chat.whatsapp.com/CEUIi2YzvuaAaAvO11RmcS',
   showPromotionalPosters: true,
   showAnnouncementPopup: true,
-  show_announcement_popup: true
+  show_announcement_popup: true,
+  adminPin: '2026',
+  admin_pin: '2026'
 };
 
 export const DEFAULT_PROMOTIONAL_POSTERS: PromotionalPoster[] = [
@@ -443,7 +445,9 @@ export function useSubXStore() {
               whatsapp_community_url: row.whatsapp_community_url || row.whatsappCommunityUrl || 'https://chat.whatsapp.com/CEUIi2YzvuaAaAvO11RmcS',
               showPromotionalPosters: showPostersVal,
               showAnnouncementPopup: showPopupVal,
-              show_announcement_popup: showPopupVal
+              show_announcement_popup: showPopupVal,
+              adminPin: row.admin_pin || row.adminPin || '2026',
+              admin_pin: row.admin_pin || row.adminPin || '2026'
             });
           }
         } catch (err) {
@@ -1351,6 +1355,7 @@ export function useSubXStore() {
       const showPostersVal = updated.showPromotionalPosters !== undefined ? updated.showPromotionalPosters : true;
       const showPopupVal = updated.showAnnouncementPopup !== undefined ? updated.showAnnouncementPopup : (updated.show_announcement_popup !== undefined ? updated.show_announcement_popup : true);
       const communityUrlVal = updated.whatsappCommunityUrl || updated.whatsapp_community_url || 'https://chat.whatsapp.com/CEUIi2YzvuaAaAvO11RmcS';
+      const pinVal = updated.adminPin || updated.admin_pin || '2026';
 
       const wsPayload = {
         id: updated.id || 'default',
@@ -1365,6 +1370,8 @@ export function useSubXStore() {
         showPromotionalPosters: showPostersVal,
         show_announcement_popup: showPopupVal,
         showAnnouncementPopup: showPopupVal,
+        admin_pin: pinVal,
+        adminPin: pinVal,
         updated_at: new Date().toISOString()
       };
 
@@ -1381,6 +1388,8 @@ export function useSubXStore() {
         showPromotionalPosters: showPostersVal,
         show_announcement_popup: showPopupVal,
         showAnnouncementPopup: showPopupVal,
+        admin_pin: pinVal,
+        adminPin: pinVal,
         updated_at: new Date().toISOString()
       };
 
@@ -1397,6 +1406,8 @@ export function useSubXStore() {
         showPromotionalPosters: showPostersVal,
         show_announcement_popup: showPopupVal,
         showAnnouncementPopup: showPopupVal,
+        admin_pin: pinVal,
+        adminPin: pinVal,
         updated_at: new Date().toISOString()
       };
 

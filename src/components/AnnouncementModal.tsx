@@ -58,7 +58,14 @@ export const AnnouncementModal: React.FC<AnnouncementModalProps> = ({ siteSettin
                          String(siteSettings?.showAnnouncementPopup) !== 'false' && 
                          String(siteSettings?.show_announcement_popup) !== 'false';
 
-  if (!isPopupEnabled || !isOpen) return null;
+  const isAdminView = typeof window !== 'undefined' && (
+    window.location.pathname.toLowerCase().includes('/admin') ||
+    window.location.pathname.toLowerCase().endsWith('admin') ||
+    window.location.hash.toLowerCase().includes('admin') ||
+    window.location.search.toLowerCase().includes('admin')
+  );
+
+  if (isAdminView || !isPopupEnabled || !isOpen) return null;
 
   return (
     <div 
