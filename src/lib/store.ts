@@ -323,10 +323,10 @@ export function useSubXStore() {
     return DEFAULT_REVIEWS;
   });
 
-  // Admin authentication state (strictly validated by BOTH Supabase Auth session AND 2nd-step PIN verification)
+  // Admin authentication state
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
-      return sessionStorage.getItem('subx_admin_pin_verified') === 'true';
+      return sessionStorage.getItem('subx_admin_auth_active') === 'true';
     } catch {
       return false;
     }
@@ -337,16 +337,16 @@ export function useSubXStore() {
     if (isSupabaseConfigured && supabase) {
       // 1. Check current active Supabase Auth session
       supabase.auth.getSession().then(({ data: { session }, error }) => {
-        const pinVerified = typeof window !== 'undefined' && sessionStorage.getItem('subx_admin_pin_verified') === 'true';
-        if (!error && session?.user && pinVerified) {
+        if (!error && session?.user) {
           setIsAdminAuthenticated(true);
+          try {
+            sessionStorage.setItem('subx_admin_auth_active', 'true');
+          } catch {}
         } else {
           setIsAdminAuthenticated(false);
-          if (!session?.user) {
-            try {
-              sessionStorage.removeItem('subx_admin_pin_verified');
-            } catch {}
-          }
+          try {
+            sessionStorage.removeItem('subx_admin_auth_active');
+          } catch {}
         }
       }).catch(() => {
         setIsAdminAuthenticated(false);
@@ -356,12 +356,14 @@ export function useSubXStore() {
       const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || !session?.user) {
           try {
-            sessionStorage.removeItem('subx_admin_pin_verified');
+            sessionStorage.removeItem('subx_admin_auth_active');
           } catch {}
           setIsAdminAuthenticated(false);
         } else if (session?.user) {
-          const pinVerified = typeof window !== 'undefined' && sessionStorage.getItem('subx_admin_pin_verified') === 'true';
-          setIsAdminAuthenticated(pinVerified);
+          try {
+            sessionStorage.setItem('subx_admin_auth_active', 'true');
+          } catch {}
+          setIsAdminAuthenticated(true);
         }
       });
 
@@ -1345,7 +1347,7 @@ export function useSubXStore() {
   // Admin Auth Actions
   const loginAdmin = (): boolean => {
     try {
-      sessionStorage.setItem('subx_admin_pin_verified', 'true');
+      sessionStorage.setItem('subx_admin_auth_active', 'true');
     } catch {}
     setIsAdminAuthenticated(true);
     return true;
@@ -1353,7 +1355,7 @@ export function useSubXStore() {
 
   const logoutAdmin = async () => {
     try {
-      sessionStorage.removeItem('subx_admin_pin_verified');
+      sessionStorage.removeItem('subx_admin_auth_active');
     } catch {}
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();

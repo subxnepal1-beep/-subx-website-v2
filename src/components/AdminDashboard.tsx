@@ -99,8 +99,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getUser().then(({ data: { user }, error }) => {
-        const pinVerified = typeof window !== 'undefined' && sessionStorage.getItem('subx_admin_pin_verified') === 'true';
-        if (error || !user || !pinVerified) {
+        if (error || !user) {
           if (isAuthenticated) {
             handleLogout();
           }
