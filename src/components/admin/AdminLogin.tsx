@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Mail, 
   Lock, 
   Eye, 
   EyeOff, 
-  ShieldCheck, 
-  ShieldAlert, 
   RefreshCw,
   Clock,
-  AlertOctagon,
-  ArrowRight,
-  RotateCw
+  ArrowRight
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { SiteSettings } from '../../types';
@@ -26,7 +21,7 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
-  // Secret Disguise State (Camouflage Screen)
+  // Disguise State (Camouflage Screen - default true unless unlocked in current tab)
   const [isDisguised, setIsDisguised] = useState<boolean>(() => {
     try {
       return sessionStorage.getItem(DISGUISE_SESSION_KEY) !== 'true';
@@ -124,8 +119,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     const now = Date.now();
     
-    // Reset if taps are separated by more than 3 seconds
-    if (now - lastTapRef.current > 3000) {
+    // Reset if taps are separated by more than 3.5 seconds
+    if (now - lastTapRef.current > 3500) {
       setTapCount(1);
     } else {
       const nextCount = tapCount + 1;
@@ -154,7 +149,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     const emailToLogin = emailInput.trim().toLowerCase();
     const passToLogin = passwordInput.trim();
 
-    // 1. Validation checks
     if (!emailToLogin || !passToLogin) {
       setAuthError({
         title: 'Credentials Required',
@@ -166,14 +160,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
     if (!isSupabaseConfigured || !supabase) {
       setAuthError({
-        title: 'Database Connection Error',
-        message: 'Database is not connected. Please check configuration.'
+        title: 'Connection Error',
+        message: 'Database is not connected.'
       });
       setAuthLoading(false);
       return;
     }
 
-    // Helper for handling failed attempt
     const recordFailedAttempt = (errorMessage: string) => {
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
@@ -191,7 +184,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         setAuthError(null);
       } else {
         setAuthError({
-          title: 'Authentication Failed',
+          title: 'Sign in failed',
           message: errorMessage,
           attempts: newAttempts
         });
@@ -199,7 +192,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     };
 
     try {
-      // Authenticate with Email & Password
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailToLogin,
         password: passToLogin
@@ -207,13 +199,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
       if (error || !data?.user) {
         recordFailedAttempt(
-          error?.message || 'The email address or password you entered is incorrect.'
+          error?.message || 'Invalid email or password.'
         );
         setAuthLoading(false);
         return;
       }
 
-      // Login Verified Successfully!
+      // Success
       setFailedAttempts(0);
       setLockUntil(0);
       setRemainingSeconds(0);
@@ -222,299 +214,233 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         localStorage.removeItem(LOCK_UNTIL_STORAGE_KEY);
       } catch {}
 
-      // Trigger successful login
       onLoginSuccess(data.user.email || emailToLogin);
 
     } catch (err: any) {
-      recordFailedAttempt(err?.message || 'Authentication failed. Please verify your credentials.');
+      recordFailedAttempt(err?.message || 'Authentication failed.');
     } finally {
       setAuthLoading(false);
     }
   };
 
-  // Format MM:SS for countdown timer
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const currentHost = typeof window !== 'undefined' ? window.location.hostname || 'subxnepal.store' : 'subxnepal.store';
+  const currentHost = typeof window !== 'undefined' 
+    ? window.location.hostname || 'subxnepal.store' 
+    : 'subxnepal.store';
 
   // -------------------------------------------------------------
-  // VIEW 1: AUTHENTIC BROWSER CAMOUFLAGE ("This site can't be reached")
+  // VIEW 1: AUTHENTIC LIGHT BROWSER ERROR PAGE (Chrome DNS Style)
   // -------------------------------------------------------------
   if (isDisguised) {
     return (
-      <div className="min-h-[70vh] flex flex-col justify-start items-start w-full max-w-xl mx-auto px-6 py-12 select-none text-left font-sans">
-        {/* Sad Page Icon (Click 5 times secretly to unlock admin login) */}
+      <div className="min-h-screen bg-white text-[#202124] flex flex-col justify-start px-6 sm:px-12 pt-16 sm:pt-24 max-w-2xl mx-auto font-sans select-none antialiased">
+        
+        {/* Sad Document Icon - Secret 5-Tap Area */}
         <div 
           onClick={handleSadIconClick}
-          className="cursor-pointer mb-6 transform active:scale-95 transition-transform"
-          title=""
+          className="cursor-pointer mb-8 inline-block select-none"
           style={{ WebkitTapHighlightColor: 'transparent' }}
+          title=""
         >
-          {/* Classic Browser Sad Document SVG */}
           <svg 
-            width="64" 
-            height="64" 
-            viewBox="0 0 64 64" 
+            width="56" 
+            height="56" 
+            viewBox="0 0 48 48" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
-            className="text-slate-400 hover:text-slate-300 transition-colors"
+            className="text-[#5f6368] hover:text-[#202124] transition-colors"
           >
+            {/* Sheet Outline */}
             <path 
-              d="M12 4H40L52 16V58C52 59.1046 51.1046 60 50 60H14C12.8954 60 12 59.1046 12 58V4Z" 
-              stroke="currentColor" 
-              strokeWidth="3.5" 
-              strokeLinejoin="round" 
-              fill="#1e293b"
+              d="M10 4C7.79086 4 6 5.79086 6 8V40C6 42.2091 7.79086 44 10 44H38C40.2091 44 42 42.2091 42 40V16L30 4H10Z" 
+              stroke="#5f6368" 
+              strokeWidth="2.5" 
+              strokeLinejoin="round"
+              fill="#ffffff"
             />
+            {/* Folded Corner */}
             <path 
-              d="M38 4V16C38 17.1046 38.8954 18 40 18H52" 
-              stroke="currentColor" 
-              strokeWidth="3.5" 
+              d="M30 4V16H42" 
+              stroke="#5f6368" 
+              strokeWidth="2.5" 
               strokeLinejoin="round"
             />
             {/* Sad Eyes */}
-            <circle cx="24" cy="32" r="2.5" fill="currentColor" />
-            <circle cx="40" cy="32" r="2.5" fill="currentColor" />
-            {/* Sad Frown */}
+            <rect x="15" y="24" width="4" height="4" rx="1" fill="#5f6368" />
+            <rect x="29" y="24" width="4" height="4" rx="1" fill="#5f6368" />
+            {/* Sad Mouth */}
             <path 
-              d="M25 44C27 41.5 30 40 32 40C34 40 37 41.5 39 44" 
-              stroke="currentColor" 
-              strokeWidth="3" 
+              d="M18 35C20 32.5 22 31.5 24 31.5C26 31.5 28 32.5 30 35" 
+              stroke="#5f6368" 
+              strokeWidth="2.5" 
               strokeLinecap="round"
             />
           </svg>
         </div>
 
-        {/* Main Error Heading */}
-        <h1 className="text-2xl sm:text-3xl font-semibold text-slate-100 tracking-tight mb-4">
+        {/* Heading */}
+        <h1 className="text-[26px] sm:text-[28px] font-medium text-[#202124] tracking-tight leading-snug mb-6">
           This site can’t be reached
         </h1>
 
-        {/* Diagnostic suggestions */}
-        <div className="text-slate-400 text-sm sm:text-base space-y-3 mb-6 leading-relaxed">
-          <p>
-            Check if there is a typo in <span className="text-slate-200 font-medium">{currentHost}</span>.
-          </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-slate-400">
-            <li>If spelling is correct, try running network diagnostics.</li>
-            <li>Check your internet connection and DNS settings.</li>
-          </ul>
-        </div>
+        {/* Typo message */}
+        <p className="text-[15px] sm:text-[16px] text-[#5f6368] leading-relaxed mb-4">
+          Check if there is a typo in <span className="text-[#202124] font-medium">{currentHost}</span>.
+        </p>
+
+        {/* Sub-bullet suggestions */}
+        <ul className="list-disc pl-5 text-[14px] text-[#5f6368] space-y-2 mb-6">
+          <li>If spelling is correct, try running Windows Network Diagnostics.</li>
+          <li>Check your internet connection and DNS configuration.</li>
+        </ul>
 
         {/* Error Code */}
-        <div className="text-xs font-mono text-slate-400 mb-8 tracking-wider">
+        <p className="text-[13px] text-[#5f6368] font-mono tracking-wide mb-10">
           DNS_PROBE_FINISHED_NXDOMAIN
+        </p>
+
+        {/* Standard Chrome Blue Reload Button */}
+        <div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-6 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] active:bg-[#174ea6] text-white text-[14px] font-medium rounded-full transition-colors shadow-none cursor-pointer"
+          >
+            Reload
+          </button>
         </div>
 
-        {/* Reload Button */}
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="px-6 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white text-sm font-medium rounded-full transition-colors shadow-sm cursor-pointer flex items-center gap-2"
-        >
-          <RotateCw className="w-4 h-4" />
-          <span>Reload</span>
-        </button>
       </div>
     );
   }
 
   // -------------------------------------------------------------
-  // VIEW 2: REAL ADMIN LOGIN FORM (Revealed after 5 secret clicks)
+  // VIEW 2: CLEAN MINIMAL LIGHT SIGN IN FORM (After 5 Clicks)
   // -------------------------------------------------------------
   return (
-    <div className="w-full max-w-md mx-auto my-auto p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-200">
-      {/* SaaS Glassmorphism Card */}
-      <div 
-        className="relative bg-slate-950/95 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.9)] overflow-hidden text-center"
-        style={{
-          boxShadow: '0 0 50px -10px rgba(168, 85, 247, 0.15), 0 25px 60px -15px rgba(59, 130, 246, 0.2)'
-        }}
-      >
-        {/* Subtle top gradient accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-purple-500/80 to-blue-500/80" />
-        
-        {/* Ambient background glows */}
-        <div className="absolute -top-14 -right-14 w-44 h-44 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-14 -left-14 w-44 h-44 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-white text-[#202124] flex flex-col justify-start px-6 sm:px-12 pt-12 sm:pt-20 max-w-lg mx-auto font-sans antialiased">
+      
+      {/* Small Simple Header */}
+      <div className="mb-8">
+        <h1 className="text-[24px] font-medium text-[#202124] tracking-tight">
+          Sign In
+        </h1>
+        <p className="text-[14px] text-[#5f6368] mt-1.5">
+          {isLocked 
+            ? 'Access is temporarily locked for security.' 
+            : 'Enter administrator credentials to proceed.'}
+        </p>
+      </div>
 
-        {/* Security Shield Icon */}
-        <div className={`relative mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-inner border transition-all ${
-          isLocked
-            ? 'bg-rose-950/40 border-rose-500/40 text-rose-400'
-            : 'bg-gradient-to-br from-purple-500/20 via-indigo-600/20 to-blue-600/30 border-purple-500/30 text-purple-400'
-        }`}>
-          {isLocked ? (
-            <AlertOctagon className="w-7 h-7 text-rose-400 animate-pulse" />
-          ) : (
-            <ShieldCheck className="w-7 h-7 text-purple-300" />
+      {/* Lockout Notice */}
+      {isLocked && (
+        <div className="mb-6 p-4 rounded-lg bg-[#fce8e6] border border-[#fad2cf] text-[#c5221f] text-[13px] space-y-2">
+          <div className="font-semibold flex items-center gap-1.5">
+            <Clock className="w-4 h-4" />
+            <span>Account temporarily restricted</span>
+          </div>
+          <p className="text-[#3c4043]">
+            Too many failed sign-in attempts. Please wait 10 minutes before trying again.
+          </p>
+          <div className="font-mono font-bold text-[14px]">
+            Remaining time: {formatTime(remainingSeconds)}
+          </div>
+        </div>
+      )}
+
+      {/* Standard Error Notice */}
+      {!isLocked && authError && (
+        <div className="mb-6 p-3.5 rounded-lg bg-[#fce8e6] border border-[#fad2cf] text-[#c5221f] text-[13px] space-y-1">
+          <div className="font-medium">{authError.message}</div>
+          {authError.attempts !== undefined && (
+            <div className="text-[12px] text-[#5f6368]">
+              Attempt {authError.attempts} of 3. (3 failed attempts locks login for 10 min)
+            </div>
           )}
         </div>
+      )}
 
-        {/* Header & Subtitle */}
-        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-          SubX Nepal Admin Access
-        </h2>
-        <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-          {isLocked 
-            ? 'Access is temporarily restricted due to security protection.'
-            : 'Enter your admin credentials to access the management dashboard.'}
-        </p>
+      {/* Clean Form */}
+      <form onSubmit={handleLoginSubmit} className="space-y-5">
+        
+        {/* Email Field */}
+        <div>
+          <label className="block text-[13px] font-medium text-[#3c4043] mb-1.5">
+            Enter admin mail
+          </label>
+          <input
+            type="email"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            placeholder="admin@example.com"
+            disabled={isLocked || authLoading}
+            className="w-full bg-white border border-[#dadce0] focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] rounded-md px-3.5 py-2.5 text-[14px] text-[#202124] placeholder-[#80868b] outline-none transition-all disabled:bg-[#f1f3f4] disabled:text-[#80868b]"
+            required
+            autoComplete="email"
+          />
+        </div>
 
-        {/* 🔒 10-Minute Lockout Professional Warning Card */}
-        {isLocked && (
-          <div className="mt-5 p-4 sm:p-5 bg-gradient-to-b from-rose-950/70 to-slate-950/90 border-2 border-rose-500/60 rounded-2xl text-left space-y-3 animate-in fade-in shadow-2xl shadow-rose-950/50">
-            <div className="flex items-center gap-2 text-rose-300 font-black text-sm">
-              <span className="text-base">🔒</span>
-              <span>Account Temporarily Locked</span>
-            </div>
-            
-            <p className="text-xs text-slate-300 leading-relaxed font-normal">
-              For security reasons, admin access has been temporarily restricted after 3 failed login attempts.
-            </p>
-
-            <p className="text-xs text-rose-300/90 font-medium">
-              Please wait 10 minutes before trying again.
-            </p>
-
-            {/* Live Countdown Box */}
-            <div className="mt-2 pt-3 border-t border-rose-500/30 flex items-center justify-between bg-black/40 px-3.5 py-2.5 rounded-xl border border-rose-500/20">
-              <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold">
-                <Clock className="w-4 h-4 text-rose-400" />
-                <span>Remaining Lock Time:</span>
-              </div>
-              <div className="font-mono text-base font-black text-rose-400 tracking-wider bg-rose-950/80 px-2.5 py-0.5 rounded-lg border border-rose-500/40 shadow-inner">
-                {formatTime(remainingSeconds)}
-              </div>
-            </div>
+        {/* Password Field */}
+        <div>
+          <label className="block text-[13px] font-medium text-[#3c4043] mb-1.5">
+            Enter admin password
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="••••••••"
+              disabled={isLocked || authLoading}
+              className="w-full bg-white border border-[#dadce0] focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] rounded-md pl-3.5 pr-10 py-2.5 text-[14px] text-[#202124] placeholder-[#80868b] outline-none transition-all disabled:bg-[#f1f3f4] disabled:text-[#80868b]"
+              required
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLocked}
+              className="absolute right-3 top-2.5 text-[#5f6368] hover:text-[#202124] cursor-pointer disabled:opacity-30"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Standard Invalid Login Error Card */}
-        {!isLocked && authError && (
-          <div className="mt-5 p-3.5 bg-red-950/80 border border-red-500/60 rounded-2xl text-left space-y-1 animate-in fade-in">
-            <div className="flex items-center gap-2 text-red-300 font-black text-xs">
-              <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-              <span>{authError.title}</span>
-            </div>
-            <p className="text-xs text-red-200/90 leading-snug pl-6">
-              {authError.message}
-            </p>
-            {authError.attempts !== undefined && (
-              <div className="pt-1.5 pl-6 text-[11px] text-amber-300 font-bold flex items-center gap-1">
-                <span>Failed attempt {authError.attempts} of 3. (3 failed attempts locks login for 10 min)</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CLEAN ADMIN LOGIN FORM (Email + Password only) */}
-        <form onSubmit={handleLoginSubmit} className="mt-5 space-y-4 text-left relative z-10">
-          
-          {/* Field 1: Enter admin mail */}
-          <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
-              Enter admin mail <span className="text-purple-400">*</span>
-            </label>
-            <div className="relative">
-              <Mail className={`w-4 h-4 absolute left-3.5 top-3.5 ${isLocked ? 'text-slate-600' : 'text-slate-500'}`} />
-              <input
-                type="email"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="Enter admin mail"
-                disabled={isLocked || authLoading}
-                className={`w-full border rounded-xl pl-10 pr-3.5 py-3 text-xs focus:outline-none transition-colors ${
-                  isLocked
-                    ? 'bg-slate-900/40 border-slate-800 text-slate-500 placeholder-slate-700 cursor-not-allowed'
-                    : 'bg-slate-900/90 border-slate-800 focus:border-purple-500 text-white placeholder-slate-500'
-                }`}
-                required
-                autoComplete="email"
-              />
-            </div>
-          </div>
-
-          {/* Field 2: Enter admin password */}
-          <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
-              Enter admin password <span className="text-purple-400">*</span>
-            </label>
-            <div className="relative">
-              <Lock className={`w-4 h-4 absolute left-3.5 top-3.5 ${isLocked ? 'text-slate-600' : 'text-slate-500'}`} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="Enter admin password"
-                disabled={isLocked || authLoading}
-                className={`w-full border rounded-xl pl-10 pr-10 py-3 text-xs focus:outline-none transition-colors ${
-                  isLocked
-                    ? 'bg-slate-900/40 border-slate-800 text-slate-500 placeholder-slate-700 cursor-not-allowed'
-                    : 'bg-slate-900/90 border-slate-800 focus:border-purple-500 text-white placeholder-slate-500'
-                }`}
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLocked}
-                className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-40"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Unlock Button */}
+        {/* Action Button */}
+        <div className="pt-2">
           <button
             type="submit"
             disabled={isLocked || authLoading || !emailInput || !passwordInput}
-            className={`w-full py-3.5 px-4 rounded-xl text-white font-black text-xs sm:text-sm tracking-wide transition-all flex items-center justify-center gap-2 ${
-              isLocked || !emailInput || !passwordInput
-                ? 'bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50'
-                : 'bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:via-indigo-500 hover:to-cyan-500 shadow-lg shadow-purple-950/60 hover:shadow-purple-900/70 cursor-pointer active:scale-[0.99] disabled:opacity-50'
-            }`}
+            className="w-full sm:w-auto px-6 py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] active:bg-[#174ea6] text-white text-[14px] font-medium rounded-full transition-colors disabled:bg-[#dadce0] disabled:text-[#80868b] cursor-pointer flex items-center justify-center gap-2"
           >
             {authLoading ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Verifying Credentials...</span>
+                <span>Signing in...</span>
               </>
             ) : isLocked ? (
               <>
-                <Lock className="w-4 h-4 text-slate-500" />
-                <span>Login Locked ({formatTime(remainingSeconds)})</span>
+                <Lock className="w-4 h-4" />
+                <span>Locked ({formatTime(remainingSeconds)})</span>
               </>
             ) : (
               <>
-                <span>Login to Dashboard</span>
+                <span>Sign in</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
-        </form>
-
-        {/* Footer Security Badge */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center space-y-1 relative z-10">
-          <div className="text-[11px] font-bold text-slate-300">
-            SubX Nepal Admin Panel
-          </div>
-          <div className="text-[10px] text-purple-400 font-medium">
-            🔒 Secure Admin Authentication
-          </div>
-          <div className="text-[10px] text-slate-500">
-            10-Minute Lockout on 3 Failed Attempts
-          </div>
         </div>
 
-      </div>
+      </form>
+
     </div>
   );
 };

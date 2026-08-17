@@ -368,14 +368,16 @@ export default function App() {
         onResetProducts={store.resetProductsToDefault}
       />
 
-      {/* Floating AI Assistant Chatbot on Right */}
-      <AIChatbot
-        products={store.products}
-        siteSettings={store.siteSettings}
-        promoCodes={store.promoCodes}
-        onSelectProduct={(prod) => setDetailProduct(prod)}
-        onOpenCart={() => setIsCartOpen(true)}
-      />
+      {/* Floating AI Assistant Chatbot on Right (Hidden when Admin is open) */}
+      {!isAdminOpen && (
+        <AIChatbot
+          products={store.products}
+          siteSettings={store.siteSettings}
+          promoCodes={store.promoCodes}
+          onSelectProduct={(prod) => setDetailProduct(prod)}
+          onOpenCart={() => setIsCartOpen(true)}
+        />
+      )}
 
       {/* Website Opening Announcement Popup (WhatsApp Community) - Only on customer website */}
       {!isAdminOpen && <AnnouncementModal siteSettings={store.siteSettings} />}

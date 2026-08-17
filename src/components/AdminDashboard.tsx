@@ -129,6 +129,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const pendingOrdersCount = orders.filter((o) => o.status === 'Pending').length;
   const outOfStockCount = products.filter((p) => p.stock === 'Out of Stock').length;
 
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#ffffff] text-[#202124] overflow-y-auto">
+        <AdminLogin 
+          onLoginSuccess={handleLoginSuccess}
+          siteSettings={siteSettings}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-6xl h-[92vh] bg-[#07090E] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
@@ -142,15 +153,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         />
 
         {/* Body Content */}
-        {!isAuthenticated ? (
-          <div className="flex-1 overflow-y-auto flex items-center justify-center">
-            <AdminLogin 
-              onLoginSuccess={handleLoginSuccess}
-              siteSettings={siteSettings}
-            />
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col min-h-0 bg-[#07090E]">
+        <div className="flex-1 flex flex-col min-h-0 bg-[#07090E]">
             
             {/* Top Navigation Tabs */}
             <div className="px-4 sm:px-6 pt-3 bg-[#0A0D14] border-b border-slate-800 shrink-0 overflow-x-auto scrollbar-none">
@@ -344,7 +347,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
           </div>
-        )}
 
       </div>
     </div>
